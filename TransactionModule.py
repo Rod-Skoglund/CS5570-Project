@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# Transaction Class for the scheduler group project for CS 5570
+#
+# Group 4: Ergin Bostanci, Rod Skoglund, Jonathan Wolfe, Pavan Yannamaneni 
+# ------------------------------------------------------------------------------
+
 class Transaction:
     '''
     Class describing the attributes of a transaction

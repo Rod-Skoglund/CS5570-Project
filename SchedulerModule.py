@@ -4,40 +4,7 @@
 # Group 4: Ergin Bostanci, Rod Skoglund, Jonathan Wolfe, Pavan Yannamaneni 
 # ------------------------------------------------------------------------------
 import TransactionModule
-
-class Lock:
-    '''
-    Class describing the attributes of a lock
-    '''
-    def __init__(self, item, lock, ):
-        '''
-        Initializes the Lock requiring only the data item to be specified,
-        lock type and holding and waiting transactions can be changed via
-        methods
-
-        Parameter:
-            item (char) - character indicating the data item, a-z,
-                          with the lock
-        '''
-        self.item = item
-        # Data item associated with the lock, valid entries are
-        # a-z for the data item
-        self.type = lock
-        # Lock type, read by default, can be "read" or "write"
-        self.holding_operations = []
-        # Operations holding the lock, valid entries are operations with the
-        # type, transaction ID and data item in a string e.g. "w1(b)". These
-        # are operations that the lock is for
-        self.waiting_operations = []
-        # Operations waiting on the lock, valid entries are operations with the
-        # type, transaction ID and data item. These are operations that cannot
-        # be processed because a conflicting lock is already enacted
-
-    '''
-    TODO:
-      - Add methods to set type and add or remove transactions from holding
-        or waiting transactions
-    '''
+import LockModule
 
 class Scheduler:
     '''
