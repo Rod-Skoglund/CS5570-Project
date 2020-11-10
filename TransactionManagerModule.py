@@ -29,7 +29,7 @@ class TransactionManager:
         TODO:
           - Create transaction_count number of transactions
           - Each transaction should be a string in the format of
-            "T1: r(x); w(x); r(y) etc"
+            "T1: r1(x); w1(x); r1(y); c1;"
           - Each transaction should be added to self.transactions
           - Each transaction should have a random amount of read
             and write operations with a minimum and maximum amount
@@ -45,21 +45,26 @@ class TransactionManager:
     def generate_history(self):
         '''
         The function to randomly process operations of generated transactions
-        into a string to be passed into a scheduler
+        into a string to be passed into a scheduler. Assumes proper formatting
+        e.g. "T1: r1(x); w1(x); r1(y); c1;"
 
         Returns:
             String: History of transaction operations
         '''
-        print("TODO: implement history generator")
-        '''
-        TODO:
-          - Create a string of a history of operations from self.transactions
-          - The string should be set to self.history
-          - The resulting string should be in the format of "w3(c); r3(c); c3;
-            a2; r1(c); r1(c); w1(b); a1;"
-          - Transactions should be removed from self.transactions once they
-            have been added to self.history
-        '''
+        while len(self.transactions) > 0:
+            transaction_idx = rnd.randint(0, len(self.transactions) - 1)
+            # If all that remains is the abort or commit, remove
+            # transaction after getting the operation
+            if len(self.transactions[transaction_idx]) <= 5:
+                self.history += self.transactions[transaction_idx][3:7]
+                self.transactions.pop(transaction_idx)
+            # Get the first operator then remove it from the transaction
+            else:
+                self.history += self.transactions[transaction_idx][3:10]
+                self.transactions[transaction_idx] = \
+                self.transactions[transaction_idx][:3] + \
+                self.transactions[transaction_idx][10:]
+
         return self.history
 
 if __name__ == "__main__":

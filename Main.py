@@ -16,18 +16,10 @@ def main():
     scheduler = SchedulerModule.Scheduler()
 
     # Get user input for the amount of transactions and data items
-    '''
-    TODO:
-      - Get user input for the amount of transactions and data_types and
-        replace the hard-coded numbers below with this functionality
-      - Need to wrap user input requestw in while loops to keep asking
-        till the user enters valid input
-      - Validate input is a number > 0, prompt again otherwise
-      - type_count should be < 27, prompt again otherwise
-    '''
     transaction_count = 0
     type_count = 0
 
+    # Get number of transactions from user
     while(True):
       transaction_count = input("Enter the number of transactions as an positive integer: " )
       if transaction_count.isnumeric():
@@ -36,6 +28,7 @@ def main():
               break        
       print("Please enter a numeric value greater than zero")
 
+    # Get number of data items from user
     while(True):
       type_count = input("Enter the number of data types as an positive integer less than 27: " )
       if type_count.isnumeric():
