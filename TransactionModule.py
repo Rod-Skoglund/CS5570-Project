@@ -20,7 +20,7 @@ class Transaction:
         # Numerical identifier associated with the transaction
         self.status = "active"
         # Status of the transaction, valid entries are "active",
-        # "blocked", "committed" "aborted"
+        # "blocked", "committed" "aborted", "restarted"
         self.timestamp = Timestamp
         # Timestamp of when the transaction was first receieved
         self.active_operations = []
@@ -56,6 +56,12 @@ class Transaction:
         Sets the status of the transaction to aborted
         '''
         self.status = "aborted"
+
+    def set_restart(self):
+        '''
+        Sets the status of the transaction to restarted
+        '''
+        self.status = "restarted"
 
     def add_active_operation(self, operation):
         '''

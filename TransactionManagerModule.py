@@ -24,6 +24,8 @@ class TransactionManager:
             transaction_count (int): Number of transactions to generate
             item_count (int): Number of data items to spread over operations
         '''
+        print("Attempting to generate {} transactions on {} data items" \
+              .format(transaction_count, item_count))
         print("TODO: implement transaction generator")
         '''
         TODO:

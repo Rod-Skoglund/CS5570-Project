@@ -56,11 +56,11 @@ def main():
 
     # Using Strict 2PL and Wait Wound deadlock prevention create a
     # serializable history that could be sent to a data manager
-    scheduler.create_schedule(history)
+    scheduler.extract_history(history)
 
     # Print a report of the history created by the scheduler and any
     # active or blocked transactions still in the scheduler
-    scheduler.print_schedule()
+    scheduler.report_schedule()
 
 if __name__ == "__main__":
     main()
