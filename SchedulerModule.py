@@ -47,9 +47,9 @@ class Scheduler:
           - Operations should be separated by spaces
         '''
 
-        self.process_history()
+        self.process_operations(self.received_operations)
 
-    def process_operations(self, operation_list = self.received_operations):
+    def process_operations(self, operation_list):
         '''
         Loops through each operation in operation_list routing each operation
         to the appropriate function. Once the queue is empty, it then calls
@@ -58,7 +58,7 @@ class Scheduler:
         Parameters:
             operation_list (list) - Queue of operations to process in FIFO order
         '''
-        print("TODO: implement process_history method")
+        print("TODO: implement process_operations method")
         '''
         TODO:
           - Add handling to loop through each operation in operation_list
@@ -76,6 +76,17 @@ class Scheduler:
         print("TODO: implement process_read_write method")
         '''
         TODO:
+          - If a transaction for an operation is blocked or restarted, then
+          add the operation to the end of the blocked operations list and
+          do not further process the operation at this time
+          - Check if there is a lock on the data item for the operator
+          - If there is not a lock on the data item, then lock the item
+          and add the operation to the active operations list of the transaction
+          - If either the lock or operation are a write then use the conflict
+          handling method
+          - If neither the lock or operation are writes,
+          apply lock and add to active transactions list
+          - Log adding of locks or encountering conflicts
         '''
 
     def process_commits(self, transaction_ID):
@@ -90,35 +101,65 @@ class Scheduler:
         print("TODO: implement process_commits method")
         '''
         TODO:
+          - If the transaction is marked to restart, append the blocked
+          operations list to the end of the receieved operations queue and
+          remove the transaction from the transaction table
           - Mark transaction as committed using the appropriate method in
           the transaction class
           - Add each operation in the transaction's active operation list to
           the data manager log with the self.logger
           - Call the appropriate method for each operation in the transaction's
           active operation list to unlock the lock held by each operation
+          - Log processing of commits
         '''
 
-    def process_aborts(self):
+    def process_aborts(self, operation):
         '''
-        
+        Processes transaction aborts by marking the transaction as aborted
+        and removing all existing locks held by the transaction's operations
+
+        Parameters:
+            operation (string) - Abort operation for transaction to abort
         '''
         print("TODO: implement process_aborts method")
         '''
         TODO:
+          - If the transaction is marked to restart, move all operations
+          from the blocked transactions to active and mark transaction as
+          aborted
+          - Mark transaction status as aborted using the appropriate method
+          - Remove all locks on active operations
+          - Log aborting transaction
         '''
 
-    def restart_transaction(self):
+    def restart_transaction(self, transaction_ID):
         '''
+        Restart the transaction by unlocking any active operations, setting
+        the transaction status to restart and moving the active operations
+        list to the front of the blocked operations list
+
+        Parameters:
+            transaction_ID (int) - Transaction ID of transaction to restart
         '''
         print("TODO: implement process_restart method")
         '''
         TODO:
+          - Mark status of the transaction to restarted by using the appropriate
+          method
+          - Unlock all operations in the active operations list for the
+          transaction
+          - Move the active operations list to the front of the blocked
+          operations list
+          - Log restarting of the transaction
         '''
 
-    def unblock_transaction(self, transaction):
+    def unblock_transaction(self, transaction_ID):
         '''
         Removes a block held on a transaction and begins processing blocked
         operations
+
+        Parameters:
+            transaction_ID (int) - Transaction ID of transaction to unblock
         '''
         print("TODO: implement unblock_transaction method")
         '''
@@ -127,6 +168,7 @@ class Scheduler:
         - Make a temporary deep copy of the waiting list and empty the
         waiting list for the transaction
         - Use the appropriate method to process the copy of the waiting list
+        - Log unblocking transactions
         '''
 
     def release_lock(self, operation):
@@ -149,6 +191,7 @@ class Scheduler:
           to holding if it is not conflicting
           - For each operation moved to holding, call the appropriate method
           to unblock its transaction
+          - Log releasing locks
         '''
 
     def handle_conflict(self, operator, lock):
@@ -158,11 +201,21 @@ class Scheduler:
 
         Parameters:
             operator (string) - requesting operator
-            lock (Lock class) - 
+            lock (Lock class) - conflicting lock
         '''
         print("TODO: implement handle_conflict method")
         '''
         TODO:
+          - Loop through list of operations holding the lock
+          - If there are no holding timestamps, then apply the lock
+          - If the requesting timestamp is greater than all of the holding, then
+          add the requesting operation to the waiting list and block the
+          transaction
+          - If the requesting timestamp is less than any of the holding
+          timestamps, restart the younger timestamp and recheck the conflict
+          - If the requesting timestamp is equal to all of the holding, then
+          convert the lock and add it to holding
+          - Log adding locks or blocking transactions
         '''
 
     def report_schedule(self):
@@ -173,8 +226,11 @@ class Scheduler:
         print("TODO: implement report_schedule method")
         '''
         TODO:
-          - Print a report of the self.schedule
-          - Print any active or blocked transactions in self.transaction_table
+          - Save a report of the scheduler processes from self.logger
+          - Save a report on any active or blocked transactions in
+          self.transaction_table
+          - Save a report of the operations sent to the data manager from
+          the self.logger
         '''
 
     def get_timestamp(self):
