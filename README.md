@@ -61,7 +61,7 @@ UMKC CS 5570 Project
   - New locks on data items may be acquired but none can be released during the growing phase
   - Existing locks may be released but no new locks can be acquired during the shrinking phase
   - Locks can only be unlocked after the transaction is committed or aborted
-  - Locks cannot be converted from read to write or write to read and instead is treated as a conflicting operation, this avoids deadlocks with lock conversions 
+  - Locks of the same transaction can be elevated to a "write" lock. 
  
 **Wound-Wait Deadlock Prevention**
   - In the event a requesting operation conflicts with a holding operation
