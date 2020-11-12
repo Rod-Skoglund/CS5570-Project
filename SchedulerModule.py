@@ -6,6 +6,7 @@
 import TransactionModule
 import LockModule
 import LoggerModule
+import OperatorModule
 
 class Scheduler:
     '''
@@ -42,9 +43,10 @@ class Scheduler:
         '''
         TODO:
           - Add ability to extract operations from the provided history into
-          items in the received_operations queue
+          operator objects in the received_operations queue
           - Order of the operations must be maintained
           - Operations should be separated by spaces
+          - Use the Operator class for operators
         '''
 
         self.process_operations(self.received_operations)
@@ -58,20 +60,25 @@ class Scheduler:
         Parameters:
             operation_list (list) - Queue of operations to process in FIFO order
         '''
-        print("TODO: implement process_operations method")
-        '''
-        TODO:
-          - Add handling to loop through each operation in operation_list
-          - Pop off each operation from the operation_list as it is processed
-          - Route each operation to the appropriate function
-        '''
+        
+        while len(self.received_operations) > 0:
+            # Respect FIFO order
+            operation = self.received_operations.pop(0)
+            
+            # Route to appropriate function based on operator type
+            if operation.is_read() or operation.is_write():
+                self.process_read_write(operation)
+            elif operation.is_commit():
+                self.process_commits(operation.ID)
+            elif operation.is_abort():
+                self.process_aborts(operation.ID)
         
     def process_read_write(self, operator):
         '''
         Processes read and write operators using 2 phase locking
         
         Parameters:
-            operator (string) - operator requesting to be processed
+            operator (Operator class) - operator requesting to be processed
         '''
         print("TODO: implement process_read_write method")
         '''
@@ -113,13 +120,13 @@ class Scheduler:
           - Log processing of commits
         '''
 
-    def process_aborts(self, operation):
+    def process_aborts(self, transaction_ID):
         '''
         Processes transaction aborts by marking the transaction as aborted
         and removing all existing locks held by the transaction's operations
 
         Parameters:
-            operation (string) - Abort operation for transaction to abort
+            transaction_ID (int) - Number of the transaction ID to abort
         '''
         print("TODO: implement process_aborts method")
         '''
@@ -177,7 +184,7 @@ class Scheduler:
         waiting operations
 
         Parameters:
-            operation (string) - Operation of the lock to be released
+            operation (Operator class) - Operation of the lock to be released
         '''
         print("TODO: implement unlock_item method")
         '''
@@ -200,7 +207,7 @@ class Scheduler:
         deadlock prevention
 
         Parameters:
-            operator (string) - requesting operator
+            operator (Operator class) - requesting operator
             lock (Lock class) - conflicting lock
         '''
         print("TODO: implement handle_conflict method")

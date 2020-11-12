@@ -55,17 +55,20 @@ class TransactionManager:
         '''
         while len(self.transactions) > 0:
             transaction_idx = rnd.randint(0, len(self.transactions) - 1)
+            transaction_ID_len = len(str(transaction_idx + 1))
             # If all that remains is the abort or commit, remove
             # transaction after getting the operation
-            if len(self.transactions[transaction_idx]) <= 5:
-                self.history += self.transactions[transaction_idx][3:7]
+            if len(self.transactions[transaction_idx]) <= \
+               4 + transaction_ID_len:
+                self.history += self.transactions[transaction_idx][3:]
                 self.transactions.pop(transaction_idx)
             # Get the first operator then remove it from the transaction
             else:
-                self.history += self.transactions[transaction_idx][3:10]
+                self.history += self.transactions[transaction_idx] \
+                                [3:9 + transaction_ID_len]
                 self.transactions[transaction_idx] = \
                 self.transactions[transaction_idx][:3] + \
-                self.transactions[transaction_idx][10:]
+                self.transactions[transaction_idx][9 + transaction_ID_len:]
 
         return self.history
 

@@ -3,6 +3,7 @@
 #
 # Group 4: Ergin Bostanci, Rod Skoglund, Jonathan Wolfe, Pavan Yannamaneni 
 # ------------------------------------------------------------------------------
+import OperatorModule
 
 class Lock:
     '''
@@ -33,7 +34,7 @@ class Lock:
         # be processed because a conflicting lock is already enacted
 
         # Initialize for a write lock if the operation is a write
-        if operation[0] == 'w':
+        if operation.is_write():
             self.set_writelock()
 
     def set_readlock(self):

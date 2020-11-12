@@ -4,6 +4,7 @@
 # Group 4: Ergin Bostanci, Rod Skoglund, Jonathan Wolfe, Pavan Yannamaneni 
 # ------------------------------------------------------------------------------
 import LockModule
+import OperatorModule
 
 class Logger:
     '''
