@@ -26,6 +26,14 @@ class Operator:
         if self.type == 'r' or self.type == 'w':
             self.data_item = operator[2 + len(str(self.ID))]
 
+    def get_ID(self):
+        # Returns the transaction ID
+        return self.ID
+
+    def get_data_item(self):
+        # Returns the data item
+        return self.data_item
+
     def is_read(self):
         # Returns if the data type is a read
         return self.type == 'r'

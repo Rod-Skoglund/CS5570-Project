@@ -9,21 +9,21 @@ class Lock:
     '''
     Class describing the attributes of a lock
     '''
-    def __init__(self, item, operation):
+    def __init__(self, operation):
         '''
         Initializes the Lock requiring only the data item to be specified,
         lock type and holding and waiting transactions can be changed via
         methods
 
         Parameter:
-            item (char) - character indicating the data item, a-z,
-                          with the lock
+            operation (Operator class) - Operator holding the lock
         '''
-        self.item = item
+        self.item = operation.get_data_item()
         # Data item associated with the lock, valid entries are
         # a-z for the data item
-        self.type = "read"
-        # Lock type, read by default, can be "read" or "write"
+        self.type = False
+        # Lock type, read by default, False indicated read and
+        # True indicates write
         self.holding_operations = [operation]
         # Operations holding the lock, valid entries are operations with the
         # type, transaction ID and data item in a string e.g. "w1(b)". These
@@ -41,13 +41,37 @@ class Lock:
         '''
         Sets the lock type to read
         '''
-        self.type = "read"
+        self.type = False
 
     def set_writelock(self):
         '''
         Sets the lock type to write
         '''
-        self.type = "write"
+        self.type = True
+
+    def is_readlock(self):
+        '''
+        Returns True if the lock is a Read lock otherwise False
+        '''
+        return self.type == False
+
+    def is_writelock(self):
+        '''
+        Returns True if the lock is a Wrtie lock otherwise False
+        '''
+        return self.type == True
+
+    def get_lock_type(self):
+        '''
+        Returns the lock type(string), "write" or "read"
+        '''
+        return 'write' if self.type else 'read'
+
+    def get_data_item(self):
+        '''
+        Returns the data item(string) for the lock
+        '''
+        return self.item
 
     def add_holding_operation(self, operation):
         '''

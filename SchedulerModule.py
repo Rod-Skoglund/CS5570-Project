@@ -70,7 +70,7 @@ class Scheduler:
                 self.process_read_write(operation)
             elif operation.is_commit():
                 self.process_commits(operation.ID)
-            elif operation.is_abort():
+            else operation.is_abort():
                 self.process_aborts(operation.ID)
         
     def process_read_write(self, operator):
@@ -80,21 +80,37 @@ class Scheduler:
         Parameters:
             operator (Operator class) - operator requesting to be processed
         '''
-        print("TODO: implement process_read_write method")
-        '''
-        TODO:
-          - If a transaction for an operation is blocked or restarted, then
-          add the operation to the end of the blocked operations list and
-          do not further process the operation at this time
-          - Check if there is a lock on the data item for the operator
-          - If there is not a lock on the data item, then lock the item
-          and add the operation to the active operations list of the transaction
-          - If either the lock or operation are a write then use the conflict
-          handling method
-          - If neither the lock or operation are writes,
-          apply lock and add to active transactions list
-          - Log adding of locks or encountering conflicts
-        '''
+
+        transaction = self.transaction_table.get(operator.get_ID())
+
+        # Create a new transaction instance if it does not exist
+        if transaction == None:
+            transaction = TransactionModule.Transaction(operator.get_ID(), \
+                                            self.get_timestamp())
+            self.transaction_table[operator.get_ID()] = transaction
+
+        # Processing an operator when it is blocked can cause the
+        # transaction to no longer respect transaction ordering
+        if transaction.is_blocked() or transaction.is_restarted():
+            transaction.add_blocked_operation(operator)
+
+        lock = self.lock_table.get(operator.get_data_item())
+
+        # When a data item is not locked, there is no risk of conflicts
+        if lock == None:
+            self.lock_table[operator.get_data_item()] = \
+                LockModule.Lock(operator.get_data_item())
+            transaction.add_active_operation(operator)
+            self.logger.apply_lock(operator)
+        else:
+            # A conflict can only occur when an operation is a write or
+            # the lock on the data item is a write
+            if lock.is_writelock() or operator.is_write():
+                self.handle_conflict(operator, lock)
+            else:
+                lock.add_holding_operation(operator)
+                self.logger.apply_lock(operator)
+                transaction.add_active_operation(operator)
 
     def process_commits(self, transaction_ID):
         '''
