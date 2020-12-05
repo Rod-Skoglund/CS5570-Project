@@ -48,6 +48,19 @@ class Scheduler:
           - Operations should be separated by spaces
           - Use the Operator class for operators
         '''
+        begin = 0
+        for pos in range(0, len(history)):
+            if(history[pos] == ' '):
+                op = OperatorModule.Operator(history[begin:pos])
+                self.received_operations.append(op)
+                if pos + 1 < len(history):
+                    begin = pos + 1
+                else:
+                    begin = len(history)
+        
+        if(begin != len(history)):
+            op = OperatorModule.Operator(history[begin:len(history)])
+            self.received_operations.append(op)
 
         self.process_operations(self.received_operations)
 
