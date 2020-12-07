@@ -25,13 +25,12 @@ class Lock:
         # Lock type, read by default, False indicated read and
         # True indicates write
         self.holding_operations = [operation]
-        # Operations holding the lock, valid entries are operations with the
-        # type, transaction ID and data item in a string e.g. "w1(b)". These
-        # are operations that the lock is for
+        # Operations holding the lock, valid entries are operator class.
+        # These are operations that the lock is for
         self.waiting_operations = []
-        # Operations waiting on the lock, valid entries are operations with the
-        # type, transaction ID and data item. These are operations that cannot
-        # be processed because a conflicting lock is already enacted
+        # Operations waiting on the lock, valid entries are operator class.
+        # These are operations that cannot be processed because a
+        # conflicting lock is already enacted
 
         # Initialize for a write lock if the operation is a write
         if operation.is_write():
