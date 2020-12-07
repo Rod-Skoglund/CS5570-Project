@@ -8,6 +8,8 @@ import LockModule
 import LoggerModule
 import OperatorModule
 
+import copy
+
 class Scheduler:
     '''
     Creates a serializable history from a provided history of operations
@@ -38,15 +40,6 @@ class Scheduler:
         Parameters:
             history (string) - history of operations of transactions in the form
                 of "w3(a); w2(c); w2(a); r1(d); c3; a2; etc"
-        '''
-        print("TODO: implement extract_history method")
-        '''
-        TODO:
-          - Add ability to extract operations from the provided history into
-          operator objects in the received_operations queue
-          - Order of the operations must be maintained
-          - Operations should be separated by spaces
-          - Use the Operator class for operators
         '''
         begin = 0
         for pos in range(0, len(history)):
@@ -112,7 +105,7 @@ class Scheduler:
         # When a data item is not locked, there is no risk of conflicts
         if lock == None:
             self.lock_table[operator.get_data_item()] = \
-                LockModule.Lock(operator.get_data_item())
+                LockModule.Lock(operator)
             transaction.add_active_operation(operator)
             self.logger.apply_lock(operator)
         else:
@@ -180,6 +173,7 @@ class Scheduler:
         print("TODO: implement process_restart method")
         '''
         TODO:
+          - If transaction is already marked as restart then skip restarting
           - Mark status of the transaction to restarted by using the appropriate
           method
           - Unlock all operations in the active operations list for the
@@ -239,20 +233,33 @@ class Scheduler:
             operator (Operator class) - requesting operator
             lock (Lock class) - conflicting lock
         '''
-        print("TODO: implement handle_conflict method")
-        '''
-        TODO:
-          - Loop through list of operations holding the lock
-          - If there are no holding timestamps, then apply the lock
-          - If the requesting timestamp is greater than all of the holding, then
-          add the requesting operation to the waiting list and block the
-          transaction
-          - If the requesting timestamp is less than any of the holding
-          timestamps, restart the younger timestamp and recheck the conflict
-          - If the requesting timestamp is equal to all of the holding, then
-          convert the lock and add it to holding
-          - Log adding locks or blocking transactions
-        '''
+        must_wait = False
+        transaction = self.transaction_table[operator.get_ID()]
+
+        self.logger.handle_conflict(operator, lock)
+
+        for hold_op in copy.deepcopy(lock.holding_operations):
+            hold_timestamp = self.transaction_table[hold_op.get_ID()].timestamp
+            if transaction.timestamp < hold_timestamp:
+                self.restart_transaction[hold_op.get_ID()]
+            elif transaction.timestamp > hold_timestamp:
+                must_wait = True
+                    
+        if len(lock.holding_operations) == 0:
+            lock.add_holding_operation(operator)
+            lock.set_writelock() if operator.is_write() else lock.set_readlock()
+            transaction.add_active_operation(operator)
+            self.logger.apply_lock(operator)
+        elif must_wait:
+            lock.add_waiting_operation(operator)
+            transaction.set_blocked()
+            self.logger.block_transaction(operator)
+        else:
+            lock.add_holding_operation(operator)
+            transaction.add_active_operation(operator)
+            if operator.is_write():
+                lock.set_writelock()
+            self.logger.apply_lock(operator)
 
     def report_schedule(self):
         '''
