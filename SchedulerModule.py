@@ -170,18 +170,16 @@ class Scheduler:
         Parameters:
             transaction_ID (int) - Transaction ID of transaction to restart
         '''
-        print("TODO: implement process_restart method")
-        '''
-        TODO:
-          - If transaction is already marked as restart then skip restarting
-          - Mark status of the transaction to restarted by using the appropriate
-          method
-          - Unlock all operations in the active operations list for the
-          transaction
-          - Move the active operations list to the front of the blocked
-          operations list
-          - Log restarting of the transaction
-        '''
+
+        if transaction_ID in self.transaction_table and
+           not self.transaction_table[transaction_ID].is_restarted():            transaction = self.transaction_table[transaction_ID]
+            transaction.set_restarted()
+            transaction.blocked_operations =
+                transaction.active_operations + transaction.blocked_operations
+            for op in transaction.active_operations:
+                self.release_lock(op)
+            transaction.active_operations.clear()
+            self.logger.process_restart(transaction_ID)
 
     def unblock_transaction(self, transaction_ID):
         '''
