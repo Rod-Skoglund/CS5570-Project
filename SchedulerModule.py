@@ -207,20 +207,24 @@ class Scheduler:
         Parameters:
             operation (Operator class) - Operation of the lock to be released
         '''
-        print("TODO: implement unlock_item method")
-        '''
-        TODO:
-          - Find lock
-          - Remove operation from holding operations list
-          - If the holding and waiting operations lists are empty then after
-          removing the operation completely remove the lock from self.lock_table
-          - If the holding list is empty after removing the operation but
-          the waiting list has operations, then move each waiting operation
-          to holding if it is not conflicting
-          - For each operation moved to holding, call the appropriate method
-          to unblock its transaction
-          - Log releasing locks
-        '''
+
+        self.logger.release_lock(operation)
+        lock = self.lock_table[operation.get_data_item()]
+        lock.holding_operations.remove(operation)
+        
+        lock.set_readlock()
+        for op in lock.holding_operations:
+            if op.is_write():
+                lock.set_writelock()
+                break
+            
+        if not lock.holding_operations and not lock.waiting_operations:
+            self.lock_table.remove(lock)
+        else:
+            waiting_ops = copy.deepcopy(lock.waiting_operations)
+            lock.waiting_operations.clear()
+            for op in waiting_ops:
+                self.unblock_transaction(op.get_ID())
 
     def handle_conflict(self, operator, lock):
         '''
