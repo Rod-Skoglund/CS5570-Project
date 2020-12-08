@@ -43,6 +43,13 @@ class TransactionManager:
           - If the user specifies 5 data items, then the operators should
             only use the first 5 a-z characters
         '''
+        for transaction_id in range (1,transaction_count+1):
+          Mytransation = " T{} ".format(transaction_id)
+          for operation in range (0,rnd.randint(1,8)) :
+            Mytransation += " {}{}({});".format(rnd.choice(['w','r']),transaction_id,chr(rnd.randint(97,96+item_count)))
+            Mytransation += " {}{};".format(rnd.choice(['a','c']),transaction_id)
+          self.transactions.append(Mytransation)
+
 
     def generate_history(self):
         '''
