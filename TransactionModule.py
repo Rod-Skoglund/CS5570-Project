@@ -110,7 +110,8 @@ class Transaction:
         Parameters:
             operation(Operator class) - Operator to remove from list
         '''
-        self.active_operations.remove(operation)
+        if operation in self.active_operations:
+            self.active_operations.remove(operation)
 
     def add_blocked_operation(self, operation):
         '''
@@ -129,7 +130,8 @@ class Transaction:
         Parameters:
             operation(Operator class) - Operator to remove from list
         '''
-        self.blocked_operations.remove(operation)
+        if operation in self.blocked_operations:
+            self.blocked_operations.remove(operation)
 
     def __str__(self):
         # Returns a string representation of the Transaction

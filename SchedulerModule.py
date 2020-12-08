@@ -160,6 +160,10 @@ class Scheduler:
         if not transaction.is_restarted():
             for op in transaction.active_operations:
                 self.release_lock(op)
+
+        for op in transaction.blocked_operations:
+            lock = self.lock_table[op.get_data_item()]
+            lock.remove_waiting_operation(op)
                 
         transaction.active_operations.extend(transaction.blocked_operations)
         transaction.blocked_operations.clear()

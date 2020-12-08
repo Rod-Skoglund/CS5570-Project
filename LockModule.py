@@ -82,7 +82,8 @@ class Lock:
         '''
         Removes the operation from the list of operations holding the lock
         '''
-        self.holding_operations.remove(operation)
+        if operation in self.holding_operations:
+            self.holding_operations.remove(operation)
 
     def add_waiting_operation(self, operation):
         '''
@@ -94,7 +95,8 @@ class Lock:
         '''
         Removes the operation from the list of operations waiting on the lock
         '''
-        self.waiting_operations.remove(operation)
+        if operation in self.waiting_operations:
+            self.waiting_operations.remove(operation)
 
     def __str__(self):
         # Returns a string representation of the Lock
