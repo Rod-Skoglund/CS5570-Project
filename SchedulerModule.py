@@ -150,16 +150,18 @@ class Scheduler:
         Parameters:
             transaction_ID (int) - Number of the transaction ID to abort
         '''
-        print("TODO: implement process_aborts method")
-        '''
-        TODO:
-          - If the transaction is marked to restart, move all operations
-          from the blocked transactions to active and mark transaction as
-          aborted
-          - Mark transaction status as aborted using the appropriate method
-          - Remove all locks on active operations
-          - Log aborting transaction
-        '''
+        self.logger.process_abort(transaction_ID)
+        
+        transaction = self.transaction_table[transaction_ID]
+        
+        if not transaction.is_restarted():
+            for op in transaction.active_operations:
+                self.release_lock(op)
+                
+        transaction.active_operations.extend(transaction.blocked_operations)
+        transaction.blocked_operations.clear()
+        transaction.set_aborted()
+                
 
     def restart_transaction(self, transaction_ID):
         '''
@@ -174,7 +176,6 @@ class Scheduler:
         if (transaction_ID in self.transaction_table) and \
            not self.transaction_table[transaction_ID].is_restarted():
             transaction = self.transaction_table[transaction_ID]
-            print(transaction)
             transaction.set_restarted()
             transaction.blocked_operations = \
                 transaction.active_operations + transaction.blocked_operations

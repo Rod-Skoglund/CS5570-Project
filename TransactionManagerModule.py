@@ -70,6 +70,9 @@ class TransactionManager:
                 self.transactions[transaction_idx] = \
                 self.transactions[transaction_idx][6 + transaction_ID_len:]
 
+        with open("history_log.txt", "w") as history_file:
+            history_file.write("Initial history:" + self.history)
+
         return self.history
 
 if __name__ == "__main__":
