@@ -189,15 +189,16 @@ class Scheduler:
         Parameters:
             transaction_ID (int) - Transaction ID of transaction to unblock
         '''
-        print("TODO: implement unblock_transaction method")
-        '''
-        TODO:
-        - Set transaction status to active with the appropriate method
-        - Make a temporary deep copy of the waiting list and empty the
-        waiting list for the transaction
-        - Use the appropriate method to process the copy of the waiting list
-        - Log unblocking transactions
-        '''
+        self.logger.unblock_transaction(transaction_ID)
+        transaction = self.transaction_table[transaction_ID]
+        blocked_ops = copy.deepcopy(transaction.waiting_operations)
+        transaction.waiting_operations.clear()
+        for op_index in range(0, len(blocked_ops)):
+            if(transaction.is_blocked()):
+                transaction.waiting_operations = blocked_ops[op_index:]
+                break
+            else:
+                self.process_read_write(op)
 
     def release_lock(self, operation):
         '''
@@ -210,7 +211,7 @@ class Scheduler:
 
         self.logger.release_lock(operation)
         lock = self.lock_table[operation.get_data_item()]
-        lock.holding_operations.remove(operation)
+        lock.remove_holding_operation(operation)
         
         lock.set_readlock()
         for op in lock.holding_operations:
