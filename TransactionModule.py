@@ -130,3 +130,13 @@ class Transaction:
             operation(Operator class) - Operator to remove from list
         '''
         self.blocked_operations.remove(operation)
+
+    def __str__(self):
+        # Returns a string representation of the Transaction
+        return "ID: {}, Status: {}, Timestamp: {}, active: {}, blocked: {}" \
+            .format(self.ID, self.status, self.timestamp,
+                    self.active_operations, self.blocked_operations)
+
+    def __repr__(self):
+        # Returns a representation of the Transaction
+        return str(self)

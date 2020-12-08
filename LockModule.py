@@ -95,3 +95,13 @@ class Lock:
         Removes the operation from the list of operations waiting on the lock
         '''
         self.waiting_operations.remove(operation)
+
+    def __str__(self):
+        # Returns a string representation of the Lock
+        return "Data Item: {}, Lock Type: {}, Holding: {}, Waiting: {}" \
+            .format(self.item, self.get_lock_type(),
+                    self.holding_operations, self.waiting_operations)
+
+    def __repr__(self):
+        # Returns a representation of the Lock
+        return str(self)

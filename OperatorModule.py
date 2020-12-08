@@ -14,7 +14,7 @@ class Operator:
         if len(operator) < 2:
             raise Exception("Invalid operator length: " + operator)
         i = 1
-        while operator[i] != '(':
+        while operator[i] != '(' and operator[i] != ';':
             i += 1
             if i > 10:
                 raise Exception("Invalid operator: " + operator)
@@ -56,3 +56,7 @@ class Operator:
             return '{}{}({});'.format(self.type, str(self.ID), self.data_item)
         else:
             return '{}{};'.format(self.type, str(self.ID))
+
+    def __repr__(self):
+        # Returns a representation of the operator
+        return str(self)

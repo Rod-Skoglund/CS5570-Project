@@ -1,2 +1,6 @@
 
 *.pyc
+data_manager_log.txt
+locks_log.txt
+processes_log.txt
+transactions_log.txt

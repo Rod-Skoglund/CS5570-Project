@@ -43,7 +43,7 @@ class Scheduler:
         '''
         begin = 0
         for pos in range(0, len(history)):
-            if(history[pos] == ' '):
+            if(history[pos] == ' ' and begin != pos):
                 op = OperatorModule.Operator(history[begin:pos])
                 self.received_operations.append(op)
                 if pos + 1 < len(history):
@@ -76,7 +76,7 @@ class Scheduler:
                 self.process_read_write(operation)
             elif operation.is_commit():
                 self.process_commits(operation.ID)
-            else operation.is_abort():
+            elif operation.is_abort():
                 self.process_aborts(operation.ID)
         
     def process_read_write(self, operator):
@@ -171,10 +171,12 @@ class Scheduler:
             transaction_ID (int) - Transaction ID of transaction to restart
         '''
 
-        if transaction_ID in self.transaction_table and
-           not self.transaction_table[transaction_ID].is_restarted():            transaction = self.transaction_table[transaction_ID]
+        if (transaction_ID in self.transaction_table) and \
+           not self.transaction_table[transaction_ID].is_restarted():
+            transaction = self.transaction_table[transaction_ID]
+            print(transaction)
             transaction.set_restarted()
-            transaction.blocked_operations =
+            transaction.blocked_operations = \
                 transaction.active_operations + transaction.blocked_operations
             for op in transaction.active_operations:
                 self.release_lock(op)
@@ -191,14 +193,14 @@ class Scheduler:
         '''
         self.logger.unblock_transaction(transaction_ID)
         transaction = self.transaction_table[transaction_ID]
-        blocked_ops = copy.deepcopy(transaction.waiting_operations)
-        transaction.waiting_operations.clear()
+        blocked_ops = copy.deepcopy(transaction.blocked_operations)
+        transaction.blocked_operations.clear()
         for op_index in range(0, len(blocked_ops)):
             if(transaction.is_blocked()):
                 transaction.waiting_operations = blocked_ops[op_index:]
                 break
             else:
-                self.process_read_write(op)
+                self.process_read_write(blocked_ops[op_index])
 
     def release_lock(self, operation):
         '''
@@ -210,6 +212,7 @@ class Scheduler:
         '''
 
         self.logger.release_lock(operation)
+        print(self.lock_table.keys())
         lock = self.lock_table[operation.get_data_item()]
         lock.remove_holding_operation(operation)
         
@@ -220,7 +223,7 @@ class Scheduler:
                 break
             
         if not lock.holding_operations and not lock.waiting_operations:
-            self.lock_table.remove(lock)
+            self.lock_table.pop(lock.get_data_item())
         else:
             waiting_ops = copy.deepcopy(lock.waiting_operations)
             lock.waiting_operations.clear()
@@ -244,7 +247,7 @@ class Scheduler:
         for hold_op in copy.deepcopy(lock.holding_operations):
             hold_timestamp = self.transaction_table[hold_op.get_ID()].timestamp
             if transaction.timestamp < hold_timestamp:
-                self.restart_transaction[hold_op.get_ID()]
+                self.restart_transaction(hold_op.get_ID())
             elif transaction.timestamp > hold_timestamp:
                 must_wait = True
                     
@@ -269,15 +272,21 @@ class Scheduler:
         Print a report of the history created by the scheduler and
         any active or blocked transactions still in the scheduler
         '''
-        print("TODO: implement report_schedule method")
-        '''
-        TODO:
-          - Save a report of the scheduler processes from self.logger
-          - Save a report on any active or blocked transactions in
-          self.transaction_table
-          - Save a report of the operations sent to the data manager from
-          the self.logger
-        '''
+        with open("data_manager_log.txt", "w") as data_manager_file:
+            data_manager_file.write("H:" + self.logger.data_manager_log)
+
+        with open("processes_log.txt", "w") as processes_file:
+            processes_file.write(self.logger.processes_log)
+
+        with open("transactions_log.txt" , "w") as transactions_file:
+            transactions = list(self.transaction_table.values())
+            for transaction in transactions:
+                transactions_file.write(str(transaction) + "\n")
+
+        with open("locks_log.txt", "w") as locks_file:
+            locks = list(self.lock_table.values())
+            for lock in locks:
+                locks_file.write(str(lock) + "\n")
 
     def get_timestamp(self):
         '''

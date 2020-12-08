@@ -26,29 +26,17 @@ class TransactionManager:
         '''
         print("Attempting to generate {} transactions on {} data items" \
               .format(transaction_count, item_count))
-        print("TODO: implement transaction generator")
-        '''
-        TODO:
-          - Create transaction_count number of transactions
-          - Each transaction should be a string in the format of
-            "T1: r1(x); w1(x); r1(y); c1;"
-          - Each transaction should be added to self.transactions
-          - Each transaction should have a random amount of read
-            and write operations with a minimum and maximum amount
-            of operations
-          - Each transaction should be ended in either a commit or abort
-          - Each operation should randomly choose a data item within the
-            range of data items specified by item_count
-          - Data items should be a lowercase a-z character
-          - If the user specifies 5 data items, then the operators should
-            only use the first 5 a-z characters
-        '''
+        
         for transaction_id in range (1,transaction_count+1):
-          Mytransation = " T{} ".format(transaction_id)
-          for operation in range (0,rnd.randint(1,8)) :
-            Mytransation += " {}{}({});".format(rnd.choice(['w','r']),transaction_id,chr(rnd.randint(97,96+item_count)))
-            Mytransation += " {}{};".format(rnd.choice(['a','c']),transaction_id)
-          self.transactions.append(Mytransation)
+            Mytransation = "T{}:".format(transaction_id)
+            for operation in range (0,rnd.randint(1,8)) :
+                Mytransation += " {}{}({});" \
+                                .format(rnd.choice(['w','r']), \
+                                        transaction_id, \
+                                        chr(rnd.randint(97, 96 + item_count)))
+            Mytransation += " {}{};".format(rnd.choice(['a','c']), \
+                                            transaction_id)
+            self.transactions.append(Mytransation)
 
 
     def generate_history(self):
@@ -60,22 +48,27 @@ class TransactionManager:
         Returns:
             String: History of transaction operations
         '''
+        # Remove 'T#:' heading from every transaction
+        for idx in range(0 , len(self.transactions)):
+            transaction_ID_len = len(str(idx + 1))
+            self.transactions[idx] = \
+                            self.transactions[idx][2 + transaction_ID_len:]
+
         while len(self.transactions) > 0:
             transaction_idx = rnd.randint(0, len(self.transactions) - 1)
             transaction_ID_len = len(str(transaction_idx + 1))
             # If all that remains is the abort or commit, remove
             # transaction after getting the operation
-            if len(self.transactions[transaction_idx]) <= \
-               4 + transaction_ID_len:
-                self.history += self.transactions[transaction_idx][3:]
+            if self.transactions[transaction_idx][1] == 'c' or \
+               self.transactions[transaction_idx][1] == 'a':
+                self.history += self.transactions[transaction_idx]
                 self.transactions.pop(transaction_idx)
             # Get the first operator then remove it from the transaction
             else:
                 self.history += self.transactions[transaction_idx] \
-                                [3:9 + transaction_ID_len]
+                                [0:6 + transaction_ID_len]
                 self.transactions[transaction_idx] = \
-                self.transactions[transaction_idx][:3] + \
-                self.transactions[transaction_idx][9 + transaction_ID_len:]
+                self.transactions[transaction_idx][6 + transaction_ID_len:]
 
         return self.history
 
