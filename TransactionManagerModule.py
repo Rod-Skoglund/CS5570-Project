@@ -34,8 +34,9 @@ class TransactionManager:
                                 .format(rnd.choice(['w','r']), \
                                         transaction_id, \
                                         chr(rnd.randint(97, 96 + item_count)))
-            Mytransation += " {}{};".format(rnd.choice(['a','c']), \
-                                            transaction_id)
+            Mytransation += " {}{};".format( \
+                rnd.choices(['a','c'], weights = [1, 10,], k = 1)[0], \
+                transaction_id)
             self.transactions.append(Mytransation)
 
 
@@ -51,24 +52,26 @@ class TransactionManager:
         # Remove 'T#:' heading from every transaction
         for idx in range(0 , len(self.transactions)):
             transaction_ID_len = len(str(idx + 1))
-            self.transactions[idx] = \
+            self.transactions[idx] = "{}".format(transaction_ID_len) + \
                             self.transactions[idx][2 + transaction_ID_len:]
-
+            
         while len(self.transactions) > 0:
             transaction_idx = rnd.randint(0, len(self.transactions) - 1)
-            transaction_ID_len = len(str(transaction_idx + 1))
+            transaction_ID_len = int(self.transactions[transaction_idx][0])
+
             # If all that remains is the abort or commit, remove
             # transaction after getting the operation
-            if self.transactions[transaction_idx][1] == 'c' or \
-               self.transactions[transaction_idx][1] == 'a':
-                self.history += self.transactions[transaction_idx]
+            if self.transactions[transaction_idx][2] == 'c' or \
+               self.transactions[transaction_idx][2] == 'a':
+                self.history += self.transactions[transaction_idx][1:]
                 self.transactions.pop(transaction_idx)
             # Get the first operator then remove it from the transaction
             else:
                 self.history += self.transactions[transaction_idx] \
-                                [0:6 + transaction_ID_len]
+                                [1:7 + transaction_ID_len]
                 self.transactions[transaction_idx] = \
-                self.transactions[transaction_idx][6 + transaction_ID_len:]
+                self.transactions[transaction_idx][0] + \
+                self.transactions[transaction_idx][(7 + transaction_ID_len):]
 
         with open("history_log.txt", "w") as history_file:
             history_file.write("Initial history:" + self.history)

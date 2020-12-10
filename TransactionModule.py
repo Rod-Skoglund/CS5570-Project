@@ -93,6 +93,21 @@ class Transaction:
         '''
         return self.status == 4
 
+    def get_status(self):
+        '''
+        Returns a string of the status of the transaction
+        '''
+        if self.is_active():
+            return 'active'
+        elif self.is_blocked():
+            return 'blocked'
+        elif self.is_committed():
+            return 'committed'
+        elif self.is_aborted():
+            return 'aborted'
+        elif self.is_restarted():
+            return 'restarted'
+
     def add_active_operation(self, operation):
         '''
         Adds operation to the list of active operations for the transaction
@@ -136,7 +151,7 @@ class Transaction:
     def __str__(self):
         # Returns a string representation of the Transaction
         return "ID: {}, Status: {}, Timestamp: {}, active: {}, blocked: {}" \
-            .format(self.ID, self.status, self.timestamp,
+            .format(self.ID, self.get_status(), self.timestamp,
                     self.active_operations, self.blocked_operations)
 
     def __repr__(self):

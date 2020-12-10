@@ -67,10 +67,10 @@ class Scheduler:
             operation_list (list) - Queue of operations to process in FIFO order
         '''
         
-        while len(self.received_operations) > 0:
+        while len(operation_list) > 0:
             # Respect FIFO order
-            operation = self.received_operations.pop(0)
-            
+            operation = operation_list.pop(0)
+
             # Route to appropriate function based on operator type
             if operation.is_read() or operation.is_write():
                 self.process_read_write(operation)
@@ -99,6 +99,7 @@ class Scheduler:
         # transaction to no longer respect transaction ordering
         if transaction.is_blocked() or transaction.is_restarted():
             transaction.add_blocked_operation(operator)
+            self.logger.custom_log("{} blocked".format(str(operator)))
             return
 
         lock = self.lock_table.get(operator.get_data_item())
@@ -128,22 +129,33 @@ class Scheduler:
         Parameters:
             transaction_ID (int) - Number of the transaction ID to commit
         '''
-        self.logger.process_commit(transaction_ID)
         
         transaction = self.transaction_table[transaction_ID]
         
         if transaction.is_restarted():
+            self.logger.custom_log("Send transaction {} to be requeued." \
+                                   .format(transaction_ID))
             restarting_ops = copy.deepcopy(transaction.blocked_operations)
             self.transaction_table.pop(transaction_ID)
+            if not restarting_ops[-1].is_commit():
+                restarting_ops.append(OperatorModule \
+                        .Operator("c{};".format(transaction_ID)))
             self.process_operations(restarting_ops)
         elif transaction.is_blocked():
             transaction.add_blocked_operation(OperatorModule. \
                     Operator("c{};".format(transaction_ID)))
+            self.logger.custom_log("Commit {} is blocked" \
+                                   .format(transaction_ID))
         else:
+            self.logger.custom_log("Starting commit of T{}" \
+                                   .format(transaction_ID))
             transaction.set_committed()
-            for op in transaction.active_operations:
-                self.logger.add_data_manager_operation(op)
-                self.release_lock(op)
+            for idx in range(0, len(transaction.active_operations)):
+                self.logger.add_data_manager_operation( \
+                    transaction.active_operations[idx])
+                if idx == len(transaction.active_operations) - 1:
+                    self.logger.process_commit(transaction_ID)
+                self.release_lock(transaction.active_operations[idx])
 
     def process_aborts(self, transaction_ID):
         '''
@@ -153,22 +165,19 @@ class Scheduler:
         Parameters:
             transaction_ID (int) - Number of the transaction ID to abort
         '''
-        self.logger.process_abort(transaction_ID)
-        
+        self.logger.custom_log("Aborting transaction {}".format(transaction_ID))
         transaction = self.transaction_table[transaction_ID]
         
         if not transaction.is_restarted():
             for op in transaction.active_operations:
                 self.release_lock(op)
-
-        for op in transaction.blocked_operations:
-            lock = self.lock_table[op.get_data_item()]
-            lock.remove_waiting_operation(op)
+                
+        self.clear_waiting_lock_ops(transaction.blocked_operations)
                 
         transaction.active_operations.extend(transaction.blocked_operations)
         transaction.blocked_operations.clear()
         transaction.set_aborted()
-                
+        self.logger.process_abort(transaction_ID)                
 
     def restart_transaction(self, transaction_ID):
         '''
@@ -182,14 +191,21 @@ class Scheduler:
 
         if (transaction_ID in self.transaction_table) and \
            not self.transaction_table[transaction_ID].is_restarted():
-            self.logger.process_restart(transaction_ID)
+            self.logger.custom_log("Restarting {}".format(transaction_ID))
             transaction = self.transaction_table[transaction_ID]
             transaction.set_restarted()
+            self.clear_waiting_lock_ops(transaction.blocked_operations)                
             transaction.blocked_operations = \
                 transaction.active_operations + transaction.blocked_operations
             for op in transaction.active_operations:
                 self.release_lock(op)
             transaction.active_operations.clear()
+            self.logger.process_restart(transaction_ID)
+
+            if transaction.blocked_operations[-1].is_commit():
+                self.process_commits(transaction_ID)
+            elif transaction.blocked_operations[-1].is_abort():
+                self.process_aborts(transaction_ID)
 
     def unblock_transaction(self, transaction_ID):
         '''
@@ -199,13 +215,16 @@ class Scheduler:
         Parameters:
             transaction_ID (int) - Transaction ID of transaction to unblock
         '''
-        self.logger.unblock_transaction(transaction_ID)
         transaction = self.transaction_table[transaction_ID]
+        self.logger.unblock_transaction(transaction_ID)
+        if len(transaction.blocked_operations) == 0:
+            return
         blocked_ops = copy.deepcopy(transaction.blocked_operations)
         transaction.blocked_operations.clear()
+        transaction.set_active()
         for op_index in range(0, len(blocked_ops)):
             if(transaction.is_blocked()):
-                transaction.waiting_operations = blocked_ops[op_index:]
+                transaction.blocked_operations += blocked_ops[op_index:]
                 break
             else:
                 if blocked_ops[op_index].is_read() or \
@@ -257,28 +276,39 @@ class Scheduler:
 
         self.logger.handle_conflict(operator, lock)
 
-        for hold_op in copy.deepcopy(lock.holding_operations):
+        for hold_op in lock.holding_operations:
             hold_timestamp = self.transaction_table[hold_op.get_ID()].timestamp
-            if transaction.timestamp < hold_timestamp:
-                self.restart_transaction(hold_op.get_ID())
-            elif transaction.timestamp > hold_timestamp:
+            if transaction.timestamp > hold_timestamp:
                 must_wait = True
-                    
-        if len(lock.holding_operations) == 0:
-            lock.add_holding_operation(operator)
-            lock.set_writelock() if operator.is_write() else lock.set_readlock()
-            transaction.add_active_operation(operator)
-            self.logger.apply_lock(operator)
-        elif must_wait:
+                break
+
+        if must_wait:
             lock.add_waiting_operation(operator)
+            transaction.add_blocked_operation(operator)
             transaction.set_blocked()
             self.logger.block_transaction(operator)
-        else:
-            lock.add_holding_operation(operator)
-            transaction.add_active_operation(operator)
+        else:            
+            restart_list = []
+            for hold_op in copy.deepcopy(lock.holding_operations):
+                hold_timestamp = \
+                    self.transaction_table[hold_op.get_ID()].timestamp
+                if transaction.timestamp < hold_timestamp:
+                    restart_list.append(hold_op.get_ID())
+                    lock.remove_holding_operation(hold_op)
+
             if operator.is_write():
                 lock.set_writelock()
+            if len(lock.holding_operations) == 0 and operator.is_read():
+                lock.set_readlock()
+                
+            lock.add_holding_operation(operator)
+            transaction.add_active_operation(operator)
             self.logger.apply_lock(operator)
+
+            # Delay restarting transactions to prevent advancing the waiting
+            # list before the requesting operation can be added as holding
+            for transaction_ID in restart_list:
+                self.restart_transaction(transaction_ID)
 
     def report_schedule(self):
         '''
@@ -300,6 +330,36 @@ class Scheduler:
             locks = list(self.lock_table.values())
             for lock in locks:
                 locks_file.write(str(lock) + "\n")
+
+        with open("produced_history.txt", "w") as history_file:
+            for op in self.logger.history:
+                if op[0] == 'p':
+                    history_file.write(str(op[1]))
+                elif op[0] == 'a' or op[0] == 'c':
+                    history_file.write(op[0] + str(op[1]) + ";")
+                else:
+                    history_file.write(op[0] + str(op[1]))
+
+        print("Scheduler completed all tasks")
+
+    def clear_waiting_lock_ops(self, waiting_ops):
+        '''
+        Removes operations from all locks with the operation in locks'
+        the waiting list
+
+        Parameters:
+            waiting_ops (List) - List of blocked operations
+        '''
+
+        for op in waiting_ops:
+            if op.get_data_item() in self.lock_table:
+                lock = self.lock_table[op.get_data_item()]
+                lock.remove_waiting_operation(op)
+                self.logger.custom_log("Removing blocked operation {} from " \
+                                       "lock's waiting list".format(str(op)))
+                if not lock.holding_operations and \
+                   not lock.remove_waiting_operation:
+                    self.lock_table.pop(lock.get_data_item())
 
     def get_timestamp(self):
         '''
